@@ -325,32 +325,54 @@ done:
     return rc;
 }
 
-static int ensure_data_dir(void) {
+static const char *database_path(void) {
+    const char *path = getenv("DATABASE_PATH");
+    return path && path[0] ? path : DB_PATH;
+}
+
+static int ensure_db_dir(const char *db_path) {
+    char dir[512];
+    const char *slash;
     struct stat st;
 
-    if (stat("data", &st) == 0) {
+    slash = strrchr(db_path, '/');
+    if (!slash) {
+        return 0;
+    }
+    if ((size_t)(slash - db_path) >= sizeof(dir)) {
+        fprintf(stderr, "database directory path is too long\n");
+        return -1;
+    }
+    memcpy(dir, db_path, (size_t)(slash - db_path));
+    dir[slash - db_path] = '\0';
+    if (dir[0] == '\0') {
+        strcpy(dir, "/");
+    }
+
+    if (stat(dir, &st) == 0) {
         if (S_ISDIR(st.st_mode)) {
             return 0;
         }
-        fprintf(stderr, "data exists but is not a directory\n");
+        fprintf(stderr, "%s exists but is not a directory\n", dir);
         return -1;
     }
     if (errno != ENOENT) {
-        perror("stat data");
+        perror("stat database directory");
         return -1;
     }
-    if (mkdir("data", 0750) != 0 && errno != EEXIST) {
-        perror("mkdir data");
+    if (mkdir(dir, 0750) != 0 && errno != EEXIST) {
+        perror("mkdir database directory");
         return -1;
     }
     return 0;
 }
 
 static int init_db(sqlite3 **db) {
-    if (ensure_data_dir() != 0) {
+    const char *path = database_path();
+    if (ensure_db_dir(path) != 0) {
         return -1;
     }
-    if (sqlite3_open_v2(DB_PATH, db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL) != SQLITE_OK) {
+    if (sqlite3_open_v2(path, db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL) != SQLITE_OK) {
         fprintf(stderr, "sqlite open failed: %s\n", sqlite3_errmsg(*db));
         return -1;
     }

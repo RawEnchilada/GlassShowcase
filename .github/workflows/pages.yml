@@ -32,7 +32,9 @@ jobs:
       - name: Build static site
         run: |
           mkdir -p dist
-          cp -a public/. dist/
+          cp -a pages/. dist/
+          mkdir -p dist/assets
+          cp public/assets/icon.png dist/assets/icon.png
           touch dist/.nojekyll
 
       - name: Upload artifact

@@ -23,10 +23,11 @@ WORKDIR /app
 COPY --from=build /app/glass-tower /app/glass-tower
 COPY public /app/public
 
-RUN mkdir -p /app/data \
-    && chown -R glass:glass /app
+RUN mkdir -p /app/data /data \
+    && chown -R glass:glass /app /data
 
 USER glass
 EXPOSE 4300
+ENV DATABASE_PATH=/data/ratings.sqlite3
 
 CMD ["/app/glass-tower"]
