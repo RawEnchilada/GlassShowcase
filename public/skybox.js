@@ -1,4 +1,4 @@
-import * as THREE from "/vendor/three.module.min.js";
+import * as THREE from "./vendor/three.module.min.js";
 
 const canvas = document.querySelector("#skyCylinder");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

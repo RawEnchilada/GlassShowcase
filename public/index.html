@@ -13,14 +13,17 @@
         window.addEventListener("pageshow", () => window.scrollTo(0, 0));
       }
     </script>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" type="image/png" href="assets/icon.png">
+    <link rel="apple-touch-icon" href="assets/icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <script src="config.js"></script>
   </head>
   <body>
     <canvas class="sky-cylinder" id="skyCylinder" aria-hidden="true"></canvas>
     <div class="background" aria-hidden="true"></div>
 
     <header class="site-header">
-      <img class="site-icon" src="/assets/icon.png" alt="Glass Tower Archive">
+      <img class="site-icon" src="assets/icon.png" alt="Glass Tower Archive">
     </header>
 
     <section class="intro-section">
@@ -70,7 +73,7 @@
       </article>
     </template>
 
-    <script src="/app.js" defer></script>
-    <script type="module" src="/skybox.js"></script>
+    <script src="app.js" defer></script>
+    <script type="module" src="skybox.js"></script>
   </body>
 </html>

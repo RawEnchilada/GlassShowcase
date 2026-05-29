@@ -6,10 +6,10 @@ const projects = [
     description: "Fight supernatural creatures with your forces in this fast paced Roguelike RTS game!",
     download: "https://store.steampowered.com/app/3967040/Blackwood_Division/",
     media: [
-      "/assets/blackwood/capsule-750x900.png",
-      "/assets/blackwood/clip1.webp",
-      "/assets/blackwood/clip4.webp",
-      "/assets/blackwood/clip5.webp"
+      "assets/blackwood/capsule-750x900.png",
+      "assets/blackwood/clip1.webp",
+      "assets/blackwood/clip4.webp",
+      "assets/blackwood/clip5.webp"
     ]
   },
   {
@@ -17,12 +17,12 @@ const projects = [
     title: "Nothing Stays Dirty",
     status: "Finished",
     description: "Cleanup a spaceship after the hero has passed through, slaying all the enemies in it and breaking stuff. There might be still some surviving monsters lurking...",
-    download: "/games/dirty.zip",
+    download: "games/dirty.zip",
     media: [
-      "/assets/dirty/banner.png",
-      "/assets/dirty/2.webp",
-      "/assets/dirty/3.webp",
-      "/assets/dirty/4.webp"
+      "assets/dirty/banner.png",
+      "assets/dirty/2.webp",
+      "assets/dirty/3.webp",
+      "assets/dirty/4.webp"
     ]
   },
   {
@@ -30,11 +30,11 @@ const projects = [
     title: "Sandstorm",
     status: "Finished",
     description: "Choose your hoverbike and try to outrun the sandstorm! Dodge the obstacles and get as far as you can.",
-    download: "/games/sandstorm.zip",
+    download: "games/sandstorm.zip",
     media: [
-      "/assets/sandstorm/banner.png",
-      "/assets/sandstorm/1.gif",
-      "/assets/sandstorm/2.gif"
+      "assets/sandstorm/banner.png",
+      "assets/sandstorm/1.gif",
+      "assets/sandstorm/2.gif"
     ]
   },
   {
@@ -42,12 +42,12 @@ const projects = [
     title: "Squid Brawl",
     status: "Finished",
     description: "Which squid will stay alive? Jump in a game with your friends and try to knock each other down from the island. Last squid standing wins!",
-    download: "/games/squidbrawl-windows.zip",
+    download: "games/squidbrawl-windows.zip",
     media: [
-      "/assets/squid/banner.png",
-      "/assets/squid/banner2.png",
-      "/assets/squid/banner3.png",
-      "/assets/squid/2026-05-29_15-13-16.webp"
+      "assets/squid/banner.png",
+      "assets/squid/banner2.png",
+      "assets/squid/banner3.png",
+      "assets/squid/2026-05-29_15-13-16.webp"
     ]
   },
   {
@@ -55,12 +55,12 @@ const projects = [
     title: "Take The Land",
     status: "Playable",
     description: "Fight for control over the land in this tactical roguelike card game.",
-    download: "/games/TakeTheLandwin.zip",
+    download: "games/TakeTheLandwin.zip",
     media: [
-      "/assets/ttl/Screenshot_20260529_151524.png",
-      "/assets/ttl/Screenshot_20260529_151543.png",
-      "/assets/ttl/2026-05-29_15-17-24.gif",
-      "/assets/ttl/2026-05-29_15-18-08.gif"
+      "assets/ttl/Screenshot_20260529_151524.png",
+      "assets/ttl/Screenshot_20260529_151543.png",
+      "assets/ttl/2026-05-29_15-17-24.gif",
+      "assets/ttl/2026-05-29_15-18-08.gif"
     ]
   },
   {
@@ -68,12 +68,12 @@ const projects = [
     title: "The Forge",
     status: "Tech Demo",
     description: "Choose between randomly generated wands and win a fight against your friends in this wizard arena.",
-    download: "/games/TheForge.zip",
+    download: "games/TheForge.zip",
     media: [
-      "/assets/forge/Screenshot_20260529_151943.png",
-      "/assets/forge/2026-05-29_15-20-56.webp",
-      "/assets/forge/2026-05-29_15-21-29.webp",
-      "/assets/forge/2026-05-29_15-22-09.webp"
+      "assets/forge/Screenshot_20260529_151943.png",
+      "assets/forge/2026-05-29_15-20-56.webp",
+      "assets/forge/2026-05-29_15-21-29.webp",
+      "assets/forge/2026-05-29_15-22-09.webp"
     ]
   },
   {
@@ -81,11 +81,11 @@ const projects = [
     title: "Conways Bet",
     status: "Tech Demo",
     description: "Conway's game of a life as a casino game! Choose your attributes and place your bets, see if your cells survive the evolutionary arena.",
-    download: "/games/conwaysbet.zip",
+    download: "games/conwaysbet.zip",
     media: [
-      "/assets/conways/2026-05-29_14-52-02.gif",
-      "/assets/conways/2026-05-29_14-53-19.webp",
-      "/assets/conways/2026-05-29_14-54-04.gif"
+      "assets/conways/2026-05-29_14-52-02.gif",
+      "assets/conways/2026-05-29_14-53-19.webp",
+      "assets/conways/2026-05-29_14-54-04.gif"
     ]
   },
   {
@@ -93,10 +93,10 @@ const projects = [
     title: "Orc Wave",
     status: "Tech Demo",
     description: "Build your walls to protect the town against a fluid simulated wave of Orcs! Actually just green balls, but you get the idea.",
-    download: "/games/orcwave.zip",
+    download: "games/orcwave.zip",
     media: [
-      "/assets/orcwave/Screenshot_20260529_152413.png",
-      "/assets/orcwave/2026-05-29_15-25-31.webp"
+      "assets/orcwave/Screenshot_20260529_152413.png",
+      "assets/orcwave/2026-05-29_15-25-31.webp"
     ]
   },
   {
@@ -104,12 +104,12 @@ const projects = [
     title: "Ship Battler",
     status: "Playable",
     description: "Place and chain modules on your spaceship in this sci-fi autobattler to outsmart your enemies!",
-    download: "/games/shipbattler.zip",
+    download: "games/shipbattler.zip",
     media: [
-      "/assets/shipbattler/Screenshot_20260529_153210.png",
-      "/assets/shipbattler/Screenshot_20260529_153537.png",
-      "/assets/shipbattler/2026-05-29_15-33-07.webp",
-      "/assets/shipbattler/2026-05-29_15-34-29.webp"
+      "assets/shipbattler/Screenshot_20260529_153210.png",
+      "assets/shipbattler/Screenshot_20260529_153537.png",
+      "assets/shipbattler/2026-05-29_15-33-07.webp",
+      "assets/shipbattler/2026-05-29_15-34-29.webp"
     ]
   },
   {
@@ -117,11 +117,11 @@ const projects = [
     title: "Game 426",
     status: "Tech Demo",
     description: "Your followers are waiting oh m'lord! Help them survive in harsh world either through force or through kindness.",
-    download: "/games/game426.zip",
+    download: "games/game426.zip",
     media: [
-      "/assets/game426/Screenshot_20260529_154748.png",
-      "/assets/game426/2026-05-29_15-48-38.webp",
-      "/assets/game426/2026-05-29_15-49-37.webp"
+      "assets/game426/Screenshot_20260529_154748.png",
+      "assets/game426/2026-05-29_15-48-38.webp",
+      "assets/game426/2026-05-29_15-49-37.webp"
     ]
   },
   {
@@ -129,11 +129,11 @@ const projects = [
     title: "Nexus 2",
     status: "Playable",
     description: "Try to defeat Og'Kthur in this autobattler card game!",
-    download: "/games/nexus2.zip",
+    download: "games/nexus2.zip",
     media: [
-      "/assets/nexus2/Screenshot_20260529_155607.png",
-      "/assets/nexus2/2026-05-29_15-56-41.webp",
-      "/assets/nexus2/2026-05-29_15-57-04.webp"
+      "assets/nexus2/Screenshot_20260529_155607.png",
+      "assets/nexus2/2026-05-29_15-56-41.webp",
+      "assets/nexus2/2026-05-29_15-57-04.webp"
     ]
   },
   {
@@ -141,11 +141,11 @@ const projects = [
     title: "Shrimp",
     status: "Playable",
     description: "Find the shrimp! It's worth it I swear!",
-    download: "/games/shrimp.zip",
+    download: "games/shrimp.zip",
     media: [
-      "/assets/shrimp/Screenshot_20260529_164325.png",
-      "/assets/shrimp/Screenshot_20260529_164540.png",
-      "/assets/shrimp/2026-05-29_16-43-54.webp"
+      "assets/shrimp/Screenshot_20260529_164325.png",
+      "assets/shrimp/Screenshot_20260529_164540.png",
+      "assets/shrimp/2026-05-29_16-43-54.webp"
     ]
   },
   {
@@ -153,11 +153,11 @@ const projects = [
     title: "Crimson Ghoul",
     status: "Finished",
     description: "Defeat the evil knight that learns from your behavior!",
-    download: "/games/crimson.zip",
+    download: "games/crimson.zip",
     media: [
-      "/assets/crimson/Screenshot_20260529_164947.png",
-      "/assets/crimson/2026-05-29_16-50-12.gif",
-      "/assets/crimson/2026-05-29_16-50-44.gif"
+      "assets/crimson/Screenshot_20260529_164947.png",
+      "assets/crimson/2026-05-29_16-50-12.gif",
+      "assets/crimson/2026-05-29_16-50-44.gif"
     ]
   },
 ];
@@ -165,6 +165,7 @@ const projects = [
 const list = document.querySelector("#projectList");
 const template = document.querySelector("#cardTemplate");
 const exhibitSection = document.querySelector("#exhibition");
+const apiBase = (window.GLASS_TOWER_API_BASE || "").replace(/\/$/, "");
 let ratings = {};
 const mediaCyclers = [];
 const pendingRatings = new Set();
@@ -297,9 +298,16 @@ function syncMediaMounts() {
   });
 }
 
+function apiUrl(path) {
+  return `${apiBase}${path}`;
+}
+
 async function loadRatings() {
   try {
-    const response = await fetch("/api/ratings", { headers: { "Accept": "application/json" } });
+    const response = await fetch(apiUrl("/api/ratings"), {
+      credentials: "include",
+      headers: { "Accept": "application/json" }
+    });
     if (!response.ok) return;
     const payload = await response.json();
     ratings = payload.ratings || {};
@@ -372,8 +380,9 @@ async function rateProject(projectId, rating, card) {
   applyRatings();
 
   try {
-    const response = await fetch("/api/rate", {
+    const response = await fetch(apiUrl("/api/rate"), {
       method: "POST",
+      credentials: "include",
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json"
