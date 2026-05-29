@@ -15,6 +15,7 @@ FROM debian:bookworm-slim
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
+        gosu \
         libsqlite3-0 \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --create-home --home-dir /app glass
@@ -22,12 +23,14 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=build /app/glass-tower /app/glass-tower
 COPY public /app/public
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN mkdir -p /app/data /data \
-    && chown -R glass:glass /app /data
+    && chown -R glass:glass /app /data \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
 
-USER glass
 EXPOSE 4300
 ENV DATABASE_PATH=/data/ratings.sqlite3
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["/app/glass-tower"]

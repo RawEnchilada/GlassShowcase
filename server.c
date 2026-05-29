@@ -373,7 +373,7 @@ static int init_db(sqlite3 **db) {
         return -1;
     }
     if (sqlite3_open_v2(path, db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL) != SQLITE_OK) {
-        fprintf(stderr, "sqlite open failed: %s\n", sqlite3_errmsg(*db));
+        fprintf(stderr, "sqlite open failed for %s: %s\n", path, sqlite3_errmsg(*db));
         return -1;
     }
 
