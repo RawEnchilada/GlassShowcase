@@ -34,9 +34,6 @@ jobs:
           mkdir -p dist
           cp -a public/. dist/
           touch dist/.nojekyll
-          cat > dist/config.js <<'EOF'
-          window.GLASS_TOWER_API_BASE = ${{ toJSON(vars.GLASS_TOWER_API_BASE || '') }};
-          EOF
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

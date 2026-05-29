@@ -325,7 +325,31 @@ done:
     return rc;
 }
 
+static int ensure_data_dir(void) {
+    struct stat st;
+
+    if (stat("data", &st) == 0) {
+        if (S_ISDIR(st.st_mode)) {
+            return 0;
+        }
+        fprintf(stderr, "data exists but is not a directory\n");
+        return -1;
+    }
+    if (errno != ENOENT) {
+        perror("stat data");
+        return -1;
+    }
+    if (mkdir("data", 0750) != 0 && errno != EEXIST) {
+        perror("mkdir data");
+        return -1;
+    }
+    return 0;
+}
+
 static int init_db(sqlite3 **db) {
+    if (ensure_data_dir() != 0) {
+        return -1;
+    }
     if (sqlite3_open_v2(DB_PATH, db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL) != SQLITE_OK) {
         fprintf(stderr, "sqlite open failed: %s\n", sqlite3_errmsg(*db));
         return -1;
@@ -620,6 +644,26 @@ static int rating_counts(sqlite3 *db, const char *project_id, const char *user_i
     return 0;
 }
 
+static bool db_healthy(sqlite3 *db) {
+    sqlite3_stmt *stmt = NULL;
+    bool healthy = false;
+
+    if (sqlite3_prepare_v2(db, "SELECT 1;", -1, &stmt, NULL) != SQLITE_OK) {
+        return false;
+    }
+    healthy = sqlite3_step(stmt) == SQLITE_ROW;
+    sqlite3_finalize(stmt);
+    return healthy;
+}
+
+static void healthcheck(int fd, sqlite3 *db) {
+    if (!db_healthy(db)) {
+        send_json_text(fd, 500, "{\"ok\":false,\"error\":\"database\"}", NULL, false);
+        return;
+    }
+    send_json_text(fd, 200, "{\"ok\":true}", NULL, false);
+}
+
 static void api_ratings(int fd, sqlite3 *db, const char *user_id, bool set_cookie) {
     char json[4096];
     size_t used = 0;
@@ -797,6 +841,11 @@ static void handle_client(int fd, sqlite3 *db, const char *client_ip) {
     char *query = strchr(path, '?');
     if (query) {
         *query = '\0';
+    }
+
+    if (strcmp(method, "GET") == 0 && strcmp(path, "/health") == 0) {
+        healthcheck(fd, db);
+        return;
     }
 
     if (strcmp(method, "GET") == 0 && strcmp(path, "/api/ratings") == 0) {

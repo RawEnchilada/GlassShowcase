@@ -146,6 +146,12 @@ static void test_rate_limit(void) {
     assert(allow_rate_request(ip, now + RATE_LIMIT_WINDOW_SECONDS));
 }
 
+static void test_db_health(void) {
+    sqlite3 *db = test_db();
+    assert(db_healthy(db));
+    sqlite3_close(db);
+}
+
 int main(void) {
     test_project_validation();
     test_user_id_validation();
@@ -155,6 +161,7 @@ int main(void) {
     test_rating_counts_and_duplicate_lock();
     test_daily_backup_refresh_and_prune();
     test_rate_limit();
+    test_db_health();
     puts("All unit tests passed.");
     return 0;
 }
