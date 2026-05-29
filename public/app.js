@@ -165,7 +165,7 @@ const projects = [
 const list = document.querySelector("#projectList");
 const template = document.querySelector("#cardTemplate");
 const exhibitSection = document.querySelector("#exhibition");
-const apiBase = (window.GLASS_TOWER_API_BASE || "").replace(/\/$/, "");
+const apiBase = normalizeApiBase(window.GLASS_TOWER_API_BASE || "");
 let ratings = {};
 const mediaCyclers = [];
 const pendingRatings = new Set();
@@ -296,6 +296,13 @@ function syncMediaMounts() {
   mediaCyclers.forEach((item) => {
     setMediaMounted(item, exhibitionInView && !item.card.hasAttribute("aria-hidden"));
   });
+}
+
+function normalizeApiBase(value) {
+  const base = String(value || "").trim().replace(/\/$/, "");
+  if (!base) return "";
+  if (/^(https?:)?\/\//i.test(base)) return base;
+  return `https://${base}`;
 }
 
 function apiUrl(path) {
