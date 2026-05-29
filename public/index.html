@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8fbff">
+    <title>Glass Tower Archive</title>
+    <script>
+      if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+      }
+      if (!location.hash) {
+        window.addEventListener("pageshow", () => window.scrollTo(0, 0));
+      }
+    </script>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <canvas class="sky-cylinder" id="skyCylinder" aria-hidden="true"></canvas>
+    <div class="background" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <img class="site-icon" src="/assets/icon.png" alt="Glass Tower Archive">
+    </header>
+
+    <section class="intro-section">
+      <div class="intro-copy">
+        <h1>Project Gallery</h1>
+        <p>
+          Take a look at our projects in various states and rate your favourites! Some are just tech demos, some offer actual gameplay, some are completely finished games!
+          Rating will help us see which projects are worth pursuing.
+        </p>
+        <a class="intro-link" href="#exhibition">Enter the archive</a>
+      </div>
+      <div class="intro-wordmark" aria-hidden="true">
+        <span>Glass</span>
+        <span>Tower</span>
+      </div>
+    </section>
+
+    <section class="exhibit-section" id="exhibition" aria-label="Glass Tower exhibition">
+      <main class="page-shell">
+        <section class="project-list" id="projectList" aria-label="Archived games"></section>
+      </main>
+    </section>
+
+    <template id="cardTemplate">
+      <article class="project-card">
+        <figure class="project-media" hidden>
+          <img class="project-media-backdrop" alt="" aria-hidden="true">
+          <img alt="">
+        </figure>
+        <div class="card-topline">
+          <span class="status-badge"></span>
+          <a class="download-link" href="#" download>Download</a>
+        </div>
+        <h2></h2>
+        <p class="project-description"></p>
+        <div class="rating-row" aria-label="Rating">
+          <button class="rating-button like" type="button" data-rating="like" aria-label="Like this project">
+            <span aria-hidden="true">Like</span>
+            <strong data-count="likes">0</strong>
+          </button>
+          <button class="rating-button dislike" type="button" data-rating="dislike" aria-label="Dislike this project">
+            <span aria-hidden="true">Dislike</span>
+            <strong data-count="dislikes">0</strong>
+          </button>
+        </div>
+        <p class="rating-feedback" role="status" aria-live="polite"></p>
+      </article>
+    </template>
+
+    <script src="/app.js" defer></script>
+    <script type="module" src="/skybox.js"></script>
+  </body>
+</html>
