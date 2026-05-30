@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS build
+FROM debian:bookworm-slim AS build
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -6,15 +6,7 @@ RUN apt-get update \
         libsqlite3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN corepack enable
-
 WORKDIR /app
-
-ENV PNPM_ALLOW_BUILD_SCRIPTS=@swc/core,esbuild
-
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
 COPY Makefile server.c tests.c ./
 RUN make && make test
 
