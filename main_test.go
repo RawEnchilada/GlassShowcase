@@ -73,25 +73,13 @@ func newTestDB(t *testing.T) *sql.DB {
 	db.SetMaxOpenConns(1)
 
 	// Apply schema inside the transaction so tables exist for this test.
-	if _, err := db.Exec(schemaSQLite()); err != nil {
+	if _, err := db.Exec(schema); err != nil {
 		db.Close()
 		t.Fatalf("apply schema: %v", err)
 	}
 
 	t.Cleanup(func() { db.Close() }) // rolls back the transaction
 	return db
-}
-
-// schemaSQLite returns a MariaDB-compatible version of the schema constant
-// with the ENUM replaced by a VARCHAR so the same DDL works in MariaDB
-// without needing ALTER TABLE privileges on system tables.
-// If your MariaDB already has the tables you can remove the CREATE TABLE
-// statements and just do TRUNCATE instead.
-func schemaSQLite() string {
-	// We re-use the package-level `schema` constant from main.go.
-	// The txdb transaction ensures the tables are dropped on rollback,
-	// but CREATE TABLE IF NOT EXISTS is idempotent anyway.
-	return schema
 }
 
 func newTestMux(db *sql.DB) *http.ServeMux {
@@ -426,83 +414,5 @@ func TestGetUserId_DifferentUA(t *testing.T) {
 	id2 := getUserId("1.2.3.4:0", "curl/7.0")
 	if id1 == id2 {
 		t.Error("different user agents should produce different user IDs")
-	}
-}
-
-// ── Backups ───────────────────────────────────────────────────────────────────
-
-func TestDailyBackup_CreatesEntry(t *testing.T) {
-	db := newTestDB(t)
-
-	if err := ensureDailyBackup(db); err != nil {
-		t.Fatalf("backup failed: %v", err)
-	}
-
-	var count int
-	db.QueryRow(`SELECT COUNT(*) FROM rating_backups`).Scan(&count)
-	if count != 1 {
-		t.Errorf("want 1 backup entry, got %d", count)
-	}
-}
-
-func TestDailyBackup_IdempotentSameDay(t *testing.T) {
-	db := newTestDB(t)
-
-	ensureDailyBackup(db)
-	ensureDailyBackup(db)
-	ensureDailyBackup(db)
-
-	var count int
-	db.QueryRow(`SELECT COUNT(*) FROM rating_backups`).Scan(&count)
-	if count != 1 {
-		t.Errorf("multiple backups same day should upsert to 1 row, got %d", count)
-	}
-}
-
-func TestDailyBackup_PrunesOldEntries(t *testing.T) {
-	db := newTestDB(t)
-
-	// Insert more than backupKeep old entries directly.
-	for i := range backupKeep + 3 {
-		day := time.Now().UTC().AddDate(0, 0, -(i + 1)).Format("2006-01-02")
-		db.Exec(
-			`INSERT INTO rating_backups(created_day, created_at, ratings_json) VALUES(?,?,?)`,
-			day, time.Now().Unix(), `{"ratings":[]}`,
-		)
-	}
-
-	if err := ensureDailyBackup(db); err != nil {
-		t.Fatalf("backup failed: %v", err)
-	}
-
-	var count int
-	db.QueryRow(`SELECT COUNT(*) FROM rating_backups`).Scan(&count)
-	if count != backupKeep {
-		t.Errorf("want %d backups after pruning, got %d", backupKeep, count)
-	}
-}
-
-func TestDailyBackup_SnapshotIncludesRatings(t *testing.T) {
-	db := newTestDB(t)
-	mux := newTestMux(db)
-
-	postRate(t, mux, "squid", "like", "1.1.1.1:0", "AgentA")
-	postRate(t, mux, "forge", "dislike", "2.2.2.2:0", "AgentB")
-
-	if err := ensureDailyBackup(db); err != nil {
-		t.Fatalf("backup failed: %v", err)
-	}
-
-	var snapshotJSON string
-	db.QueryRow(`SELECT ratings_json FROM rating_backups`).Scan(&snapshotJSON)
-
-	var snapshot struct {
-		Ratings []map[string]any `json:"ratings"`
-	}
-	if err := json.Unmarshal([]byte(snapshotJSON), &snapshot); err != nil {
-		t.Fatalf("parse snapshot: %v", err)
-	}
-	if len(snapshot.Ratings) != 2 {
-		t.Errorf("want 2 ratings in snapshot, got %d", len(snapshot.Ratings))
 	}
 }

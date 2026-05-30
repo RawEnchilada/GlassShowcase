@@ -23,7 +23,6 @@ const (
 	staticDir       = "public"
 	rateLimitWindow = 60 * time.Second
 	rateLimitPosts  = 30
-	backupKeep      = 5
 )
 
 var projectIDs = map[string]bool{
@@ -89,12 +88,6 @@ CREATE TABLE IF NOT EXISTS ratings (
     created_at BIGINT NOT NULL,
     PRIMARY KEY (project_id, user_id),
     INDEX idx_ratings_project (project_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS rating_backups (
-    created_day  VARCHAR(10) PRIMARY KEY,
-    created_at   BIGINT NOT NULL,
-    ratings_json LONGTEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 
 func initDB() (*sql.DB, error) {
@@ -124,9 +117,6 @@ func initDB() (*sql.DB, error) {
 		}
 	}
 
-	if err := ensureDailyBackup(db); err != nil {
-		return nil, fmt.Errorf("initial backup: %w", err)
-	}
 	return db, nil
 }
 
@@ -139,80 +129,6 @@ func getUserId(addr string, agent string) string {
 	}
 	h := sha256.Sum256([]byte(ip + strings.ReplaceAll(agent, " ", "")))
 	return hex.EncodeToString(h[:])
-}
-
-// ── Backups ───────────────────────────────────────────────────────────────────
-
-func ensureDailyBackup(db *sql.DB) error {
-	day := time.Now().UTC().Format("2006-01-02")
-
-	snapshot, err := buildSnapshot(db)
-	if err != nil {
-		return err
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	_, err = tx.Exec(`
-        INSERT INTO rating_backups(created_day, created_at, ratings_json)
-        VALUES(?, ?, ?)
-        ON DUPLICATE KEY UPDATE 
-            created_at   = VALUES(created_at),
-            ratings_json = VALUES(ratings_json)`,
-		day, time.Now().Unix(), snapshot,
-	)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.Exec(fmt.Sprintf(`
-        DELETE FROM rating_backups
-        WHERE created_day NOT IN (
-            SELECT created_day FROM (
-                SELECT created_day FROM rating_backups
-                ORDER BY created_day DESC LIMIT %d
-            ) as tmp
-        )`, backupKeep),
-	)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
-}
-
-func buildSnapshot(db *sql.DB) (string, error) {
-	type row struct {
-		ProjectID string `json:"projectId"`
-		UserID    string `json:"userId"`
-		Rating    string `json:"rating"`
-		CreatedAt int64  `json:"createdAt"`
-	}
-
-	rows, err := db.Query(
-		`SELECT project_id, user_id, rating, created_at
-         FROM ratings ORDER BY project_id, user_id`,
-	)
-	if err != nil {
-		return "", err
-	}
-	defer rows.Close()
-
-	var records []row
-	for rows.Next() {
-		var r row
-		if err := rows.Scan(&r.ProjectID, &r.UserID, &r.Rating, &r.CreatedAt); err != nil {
-			return "", err
-		}
-		records = append(records, r)
-	}
-
-	out, err := json.Marshal(map[string]any{"ratings": records})
-	return string(out), err
 }
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
@@ -317,11 +233,6 @@ func handlePostRate(db *sql.DB, limiter *rateLimiter) http.HandlerFunc {
 		}
 
 		changed, _ := res.RowsAffected()
-		if changed > 0 {
-			if err := ensureDailyBackup(db); err != nil {
-				log.Printf("backup failed: %v", err)
-			}
-		}
 
 		rc, err := getRatingCounts(db, body.ProjectID, uid)
 		if err != nil {
@@ -353,14 +264,6 @@ func main() {
 	defer db.Close()
 
 	limiter := newRateLimiter()
-
-	go func() {
-		for range time.Tick(24 * time.Hour) {
-			if err := ensureDailyBackup(db); err != nil {
-				log.Printf("daily backup failed: %v", err)
-			}
-		}
-	}()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handleHealth(db))
