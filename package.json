@@ -12,12 +12,12 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^11.3.0",
+      "version": "11.3.0",
       "onFail": "download"
     }
   },
   "type": "module",
   "dependencies": {
-    "minify": "^15.3.1"
+    "minify": "15.3.1"
   }
 }
