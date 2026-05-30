@@ -4,81 +4,57 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-txdb"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 // ── Test DB setup ─────────────────────────────────────────────────────────────
 //
-// Each test gets its own *sql.DB that is wrapped in a transaction which rolls
-// back automatically when the connection is closed.  This means tests run
-// against a real MariaDB (pointed to by TEST_DATABASE_URL) but never leave
-// any state behind and can run in parallel safely.
+// Tests share a single real MariaDB connection (DATABASE_URL or TEST_DATABASE_URL).
+// Each test truncates the ratings table before running.
+// Tests must not run in parallel.
 //
 // Set TEST_DATABASE_URL to a MariaDB DSN before running, e.g.:
 //   TEST_DATABASE_URL="root:secret@tcp(127.0.0.1:3306)/testdb" go test ./...
 
-var (
-	txdbOnce sync.Once
-	txdbDSN  string
-)
+var testDB *sql.DB
 
-func registerTxDB(t *testing.T) {
+func getTestDB(t *testing.T) *sql.DB {
 	t.Helper()
-	txdbOnce.Do(func() {
-		txdbDSN = os.Getenv("TEST_DATABASE_URL")
-		if txdbDSN == "" {
-			// Fall back to DATABASE_URL so local dev works without extra env var.
-			txdbDSN = os.Getenv("DATABASE_URL")
-		}
-		if txdbDSN == "" {
-			// Skip all DB tests rather than panic when no DB is available.
-			return
-		}
-		txdb.Register("txdb", "mysql", txdbDSN)
-	})
-}
+	if testDB != nil {
+		return testDB
+	}
 
-func requireDSN(t *testing.T) {
-	t.Helper()
-	registerTxDB(t)
-	if txdbDSN == "" {
+	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+		dsn = os.Getenv("DATABASE_URL")
+	}
+	if dsn == "" {
 		t.Skip("set TEST_DATABASE_URL (or DATABASE_URL) to run DB tests")
 	}
-}
 
-// newTestDB returns a *sql.DB whose single connection is wrapped in a
-// transaction that rolls back when the db is closed (via t.Cleanup).
-// The schema is applied fresh inside that transaction so every test starts
-// from an empty set of tables.
-func newTestDB(t *testing.T) *sql.DB {
-	t.Helper()
-	requireDSN(t)
-
-	// Each call gets a unique connection name so parallel tests don't share a transaction.
-	connName := fmt.Sprintf("test-%s-%d", t.Name(), time.Now().UnixNano())
-	db, err := sql.Open("txdb", connName)
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		t.Fatalf("open txdb: %v", err)
+		t.Fatalf("open db: %v", err)
 	}
-	// txdb only supports a single connection.
-	db.SetMaxOpenConns(1)
-
-	// Apply schema inside the transaction so tables exist for this test.
 	if _, err := db.Exec(schema); err != nil {
-		db.Close()
 		t.Fatalf("apply schema: %v", err)
 	}
+	testDB = db
+	return testDB
+}
 
-	t.Cleanup(func() { db.Close() }) // rolls back the transaction
+func newTestDB(t *testing.T) *sql.DB {
+	t.Helper()
+	db := getTestDB(t)
+	if _, err := db.Exec(`DELETE FROM ratings`); err != nil {
+		t.Fatalf("truncate: %v", err)
+	}
 	return db
 }
 
@@ -134,8 +110,16 @@ func TestHealth_OK(t *testing.T) {
 }
 
 func TestHealth_ClosedDB(t *testing.T) {
-	db := newTestDB(t)
-	db.Close() // deliberately break it — t.Cleanup will try Close again (harmless)
+	// Use a fresh closed connection rather than closing the shared testDB.
+	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+		dsn = os.Getenv("DATABASE_URL")
+	}
+	if dsn == "" {
+		t.Skip("set TEST_DATABASE_URL (or DATABASE_URL) to run DB tests")
+	}
+	db, _ := sql.Open("mysql", dsn)
+	db.Close()
 
 	mux := newTestMux(db)
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
