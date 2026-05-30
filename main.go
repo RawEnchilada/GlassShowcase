@@ -221,7 +221,7 @@ func handlePostRate(db *sql.DB, limiter *rateLimiter) http.HandlerFunc {
 			return
 		}
 
-		println(uid + " posted a rating for " + body.ProjectID + " - " + body.Rating)
+		println(uid + " created from " + r.RemoteAddr + " + " + r.UserAgent() + "\n Posted a rating for " + body.ProjectID + " - " + body.Rating + "\n")
 
 		res, err := db.Exec(
 			`INSERT IGNORE INTO ratings(project_id, user_id, rating, created_at) VALUES(?,?,?,?)`,
