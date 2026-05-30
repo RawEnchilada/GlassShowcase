@@ -180,6 +180,20 @@ let dragPointerType = "mouse";
 let lastWheelAt = 0;
 let exhibitionInView = false;
 
+function removeSwipeIndicator(){
+    if (parseInt(localStorage.getItem("swiped")) === 1){
+        let e = document.getElementById("swipe-indicator");
+        if(e){
+            e.remove();
+        }
+    }
+}
+
+function setSwiped(){
+    localStorage.setItem("swiped",1);
+    removeSwipeIndicator();
+}
+
 function linkKind(url) {
   try {
     const parsed = new URL(url, window.location.href);
@@ -451,6 +465,7 @@ function updateExhibition() {
 
 function rotateProjects(delta) {
   currentProject += delta;
+  setSwiped();
   updateExhibition();
 }
 
@@ -549,6 +564,7 @@ function bindExhibitionVisibility() {
   check();
 }
 
+removeSwipeIndicator();
 renderCards();
 bindExhibitionVisibility();
 bindExhibitionControls();

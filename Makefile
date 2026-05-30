@@ -7,8 +7,13 @@ LDLIBS ?= -lsqlite3
 
 all: glass-tower
 
-glass-tower: server.c
+install-deps:
+	pnpm install
+	pnpm approve-builds
+
+glass-tower: install-deps server.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ server.c $(LDLIBS)
+	node ./node_modules/minify/bin/minify.js public/app.js > public/app-minified.js
 
 tests: tests.c server.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ tests.c $(LDLIBS)

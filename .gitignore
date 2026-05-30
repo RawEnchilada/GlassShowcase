@@ -2,3 +2,4 @@ tests
 glass-tower
 ratings.sqlite*
 .fuse*
+node_modules

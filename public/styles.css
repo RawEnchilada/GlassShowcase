@@ -174,7 +174,7 @@ a {
 .site-header {
   width: 100%;
   min-height: 138px;
-  padding: 26px 16px 58px;
+  padding: 26px 0 58px 0;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -214,6 +214,16 @@ a {
 
 .page-shell:active {
   cursor: grabbing;
+}
+
+#swipe-indicator{
+    position: absolute;
+    top: 20%;
+    color: white !important;
+    font-weight: bold;
+    display: flex;
+    font-size: x-large;
+    align-items: center;
 }
 
 .project-card {
