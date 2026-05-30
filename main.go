@@ -122,11 +122,25 @@ func initDB() (*sql.DB, error) {
 
 // -- User --------------------------
 
-func getUserId(addr string, agent string) string {
-	ip := addr
-	if host, _, err := net.SplitHostPort(addr); err == nil {
+func getClientIP(r *http.Request) string {
+	// X-Forwarded-For can contain a comma-separated list of IPs if multiple proxies are used.
+	// The first IP is always the original client.
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		ips := strings.Split(xff, ",")
+		if clientIP := strings.TrimSpace(ips[0]); clientIP != "" {
+			return clientIP
+		}
+	}
+
+	// Fallback if header isn't present
+	ip := r.RemoteAddr
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
 		ip = host
 	}
+	return ip
+}
+
+func getUserId(ip string, agent string) string {
 	h := sha256.Sum256([]byte(ip + strings.ReplaceAll(agent, " ", "")))
 	return hex.EncodeToString(h[:])
 }
@@ -184,7 +198,8 @@ func getRatingCounts(db *sql.DB, projectID, userID string) (ratingCounts, error)
 
 func handleGetRatings(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		uid := getUserId(r.RemoteAddr, r.UserAgent())
+		ip := getClientIP(r)
+		uid := getUserId(ip, r.UserAgent())
 		result := make(map[string]ratingCounts, len(projectIDs))
 		for id := range projectIDs {
 			rc, err := getRatingCounts(db, id, uid)
@@ -200,9 +215,9 @@ func handleGetRatings(db *sql.DB) http.HandlerFunc {
 
 func handlePostRate(db *sql.DB, limiter *rateLimiter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		uid := getUserId(r.RemoteAddr, r.UserAgent())
+		ip := getClientIP(r)
+		uid := getUserId(ip, r.UserAgent())
 
-		ip := r.RemoteAddr
 		if !limiter.allow(ip) {
 			writeJSON(w, http.StatusTooManyRequests, map[string]any{"error": "rate limit exceeded"})
 			return
@@ -221,7 +236,7 @@ func handlePostRate(db *sql.DB, limiter *rateLimiter) http.HandlerFunc {
 			return
 		}
 
-		println(uid + " created from " + r.RemoteAddr + " + " + r.UserAgent() + "\n Posted a rating for " + body.ProjectID + " - " + body.Rating + "\n")
+		println(uid + " created from " + ip + " + " + r.UserAgent() + "\n Posted a rating for " + body.ProjectID + " - " + body.Rating + "\n")
 
 		res, err := db.Exec(
 			`INSERT IGNORE INTO ratings(project_id, user_id, rating, created_at) VALUES(?,?,?,?)`,
