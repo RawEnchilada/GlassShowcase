@@ -240,7 +240,7 @@ func handlePostRate(db *sql.DB, limiter *rateLimiter) http.HandlerFunc {
 
 		res, err := db.Exec(
 			`INSERT IGNORE INTO ratings(project_id, user_id, rating, created_at) VALUES(?,?,?,?)`,
-			body.ProjectID, uid, body.Rating, time.Now().Unix(),
+			body.ProjectID, uid, "like", time.Now().Unix(),
 		)
 		if err != nil {
 			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "database error"})

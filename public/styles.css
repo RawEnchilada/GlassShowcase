@@ -467,6 +467,9 @@ h2 {
   box-shadow: 0 0 22px rgba(0, 229, 255, 0.42);
 }
 
+.rating-button.dislike{
+    display: none;
+}
 .rating-button.dislike:hover:not([aria-disabled="true"]),
 .rating-button.dislike.is-mine {
   background: #ff38d6;
