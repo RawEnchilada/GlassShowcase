@@ -10,8 +10,10 @@ RUN corepack enable
 
 WORKDIR /app
 
+ENV PNPM_ALLOW_BUILD_SCRIPTS=@swc/core,esbuild
+
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile && pnpm approve-builds
+RUN pnpm install --frozen-lockfile
 
 COPY Makefile server.c tests.c ./
 RUN make && make test

@@ -182,13 +182,28 @@ a {
   position: fixed;
   inset: 0 0 auto;
   z-index: 10;
-  pointer-events: none;
 }
 
 .site-icon {
   width: clamp(68px, 11vw, 112px);
   height: auto;
   display: block;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.site-button-bar{
+    position: absolute;
+    right: 5%;
+    top: 25%;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 100;
+}
+
+.site-button-bar>a{
+    z-index: 101;
 }
 
 .page-shell {
