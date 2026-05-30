@@ -14,17 +14,16 @@ import (
 	"sync"
 	"time"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const (
 	staticDir       = "public"
-	defaultDBPath   = "data/ratings.sqlite3"
-	backupKeep      = 5
 	rateLimitWindow = 60 * time.Second
 	rateLimitPosts  = 30
+	backupKeep      = 5
 )
 
 var projectIDs = map[string]bool{
@@ -83,61 +82,52 @@ func (r *rateLimiter) allow(ip string) bool {
 // ── Database ──────────────────────────────────────────────────────────────────
 
 const schema = `
-PRAGMA journal_mode=WAL;
-PRAGMA synchronous=NORMAL;
-PRAGMA foreign_keys=ON;
-PRAGMA busy_timeout=2500;
-
 CREATE TABLE IF NOT EXISTS ratings (
-	project_id TEXT NOT NULL,
-	user_id    TEXT NOT NULL,
-	rating     TEXT NOT NULL CHECK (rating IN ('like','dislike')),
-	created_at INTEGER NOT NULL,
-	PRIMARY KEY (project_id, user_id)
-);
-CREATE INDEX IF NOT EXISTS idx_ratings_project ON ratings(project_id);
+    project_id VARCHAR(64) NOT NULL,
+    user_id    VARCHAR(64) NOT NULL,
+    rating     ENUM('like','dislike') NOT NULL,
+    created_at BIGINT NOT NULL,
+    PRIMARY KEY (project_id, user_id),
+    INDEX idx_ratings_project (project_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS rating_backups (
-	created_day  TEXT PRIMARY KEY,
-	created_at   INTEGER NOT NULL,
-	ratings_json TEXT NOT NULL
-);`
-
-func dbPath() string {
-	if p := os.Getenv("DATABASE_PATH"); p != "" {
-		return p
-	}
-	return defaultDBPath
-}
+    created_day  VARCHAR(10) PRIMARY KEY,
+    created_at   BIGINT NOT NULL,
+    ratings_json LONGTEXT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 
 func initDB() (*sql.DB, error) {
-	path := dbPath()
-	if err := os.MkdirAll(getDirPath(path), 0o750); err != nil {
-		return nil, fmt.Errorf("create db dir: %w", err)
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		return nil, fmt.Errorf("DATABASE_URL environment variable is not set")
 	}
 
-	db, err := sql.Open("sqlite", path)
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
-	db.SetMaxOpenConns(1) // SQLite is single-writer
 
-	if _, err := db.Exec(schema); err != nil {
-		return nil, fmt.Errorf("apply schema: %w", err)
+	// Connection pool tuning for network environments
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(time.Minute * 3)
+
+	statements := strings.Split(schema, ";")
+	for _, stmt := range statements {
+		trimmed := strings.TrimSpace(stmt)
+		if trimmed == "" {
+			continue
+		}
+		if _, err := db.Exec(trimmed); err != nil {
+			return nil, fmt.Errorf("apply schema section: %w", err)
+		}
 	}
+
 	if err := ensureDailyBackup(db); err != nil {
 		return nil, fmt.Errorf("initial backup: %w", err)
 	}
 	return db, nil
-}
-
-func getDirPath(filePath string) string {
-	for i := len(filePath) - 1; i >= 0; i-- {
-		if filePath[i] == '/' {
-			return filePath[:i]
-		}
-	}
-	return "."
 }
 
 // -- User --------------------------
@@ -168,11 +158,11 @@ func ensureDailyBackup(db *sql.DB) error {
 	defer tx.Rollback()
 
 	_, err = tx.Exec(`
-		INSERT INTO rating_backups(created_day, created_at, ratings_json)
-		VALUES(?, ?, ?)
-		ON CONFLICT(created_day) DO UPDATE SET
-			created_at   = excluded.created_at,
-			ratings_json = excluded.ratings_json`,
+        INSERT INTO rating_backups(created_day, created_at, ratings_json)
+        VALUES(?, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+            created_at   = VALUES(created_at),
+            ratings_json = VALUES(ratings_json)`,
 		day, time.Now().Unix(), snapshot,
 	)
 	if err != nil {
@@ -180,11 +170,13 @@ func ensureDailyBackup(db *sql.DB) error {
 	}
 
 	_, err = tx.Exec(fmt.Sprintf(`
-		DELETE FROM rating_backups
-		WHERE created_day NOT IN (
-			SELECT created_day FROM rating_backups
-			ORDER BY created_day DESC LIMIT %d
-		)`, backupKeep),
+        DELETE FROM rating_backups
+        WHERE created_day NOT IN (
+            SELECT created_day FROM (
+                SELECT created_day FROM rating_backups
+                ORDER BY created_day DESC LIMIT %d
+            ) as tmp
+        )`, backupKeep),
 	)
 	if err != nil {
 		return err
@@ -203,7 +195,7 @@ func buildSnapshot(db *sql.DB) (string, error) {
 
 	rows, err := db.Query(
 		`SELECT project_id, user_id, rating, created_at
-		 FROM ratings ORDER BY project_id, user_id`,
+         FROM ratings ORDER BY project_id, user_id`,
 	)
 	if err != nil {
 		return "", err
@@ -255,10 +247,10 @@ func getRatingCounts(db *sql.DB, projectID, userID string) (ratingCounts, error)
 	var likes, dislikes sql.NullInt64
 
 	err := db.QueryRow(`
-		SELECT
-			SUM(CASE WHEN rating='like'    THEN 1 ELSE 0 END),
-			SUM(CASE WHEN rating='dislike' THEN 1 ELSE 0 END)
-		FROM ratings WHERE project_id = ?`, projectID,
+        SELECT
+            SUM(CASE WHEN rating='like'    THEN 1 ELSE 0 END),
+            SUM(CASE WHEN rating='dislike' THEN 1 ELSE 0 END)
+        FROM ratings WHERE project_id = ?`, projectID,
 	).Scan(&likes, &dislikes)
 	if err != nil && err != sql.ErrNoRows {
 		return rc, err
@@ -273,6 +265,7 @@ func getRatingCounts(db *sql.DB, projectID, userID string) (ratingCounts, error)
 	row.Scan(&rc.Mine)
 	return rc, nil
 }
+
 func handleGetRatings(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		uid := getUserId(r.RemoteAddr, r.UserAgent())
@@ -315,7 +308,7 @@ func handlePostRate(db *sql.DB, limiter *rateLimiter) http.HandlerFunc {
 		println(uid + " posted a rating for " + body.ProjectID + " - " + body.Rating)
 
 		res, err := db.Exec(
-			`INSERT OR IGNORE INTO ratings(project_id, user_id, rating, created_at) VALUES(?,?,?,?)`,
+			`INSERT IGNORE INTO ratings(project_id, user_id, rating, created_at) VALUES(?,?,?,?)`,
 			body.ProjectID, uid, body.Rating, time.Now().Unix(),
 		)
 		if err != nil {
@@ -361,7 +354,6 @@ func main() {
 
 	limiter := newRateLimiter()
 
-	// Daily backup ticker
 	go func() {
 		for range time.Tick(24 * time.Hour) {
 			if err := ensureDailyBackup(db); err != nil {

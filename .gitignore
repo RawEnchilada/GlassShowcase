@@ -3,3 +3,4 @@ glass-tower
 ratings.sqlite*
 .fuse*
 node_modules
+.env_local
